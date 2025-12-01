@@ -1,0 +1,152 @@
+<div class="card">
+  <div class="card-body">
+    <h3 class="card-title mb-4">
+      @if (order()) {
+        Modifier la commande
+      } @else {
+        Nouvelle commande
+      }
+    </h3>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <!-- Customer -->
+      <div class="mb-3">
+        <label for="customer" class="form-label">Client</label>
+        <input
+          type="text"
+          class="form-control"
+          id="customer"
+          formControlName="customer"
+          [class.is-invalid]="
+            form.controls.customer.invalid && form.controls.customer.touched
+          "
+          placeholder="Nom du client"
+        />
+        @if (form.controls.customer.invalid && form.controls.customer.touched) {
+          <div class="invalid-feedback">
+            @if (form.controls.customer.errors?.['required']) {
+              Le nom du client est requis
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Nb Days -->
+      <div class="mb-3">
+        <label for="nbDays" class="form-label">Nombre de jours</label>
+        <input
+          type="number"
+          class="form-control"
+          id="nbDays"
+          formControlName="nbDays"
+          [class.is-invalid]="
+            form.controls.nbDays.invalid && form.controls.nbDays.touched
+          "
+          min="1"
+        />
+        @if (form.controls.nbDays.invalid && form.controls.nbDays.touched) {
+          <div class="invalid-feedback">
+            @if (form.controls.nbDays.errors?.['required']) {
+              Le nombre de jours est requis
+            }
+            @if (form.controls.nbDays.errors?.['min']) {
+              Le nombre de jours doit être au moins 1
+            }
+          </div>
+        }
+      </div>
+
+      <!-- TJM -->
+      <div class="mb-3">
+        <label for="tjm" class="form-label">Taux journalier (€)</label>
+        <input
+          type="number"
+          class="form-control"
+          id="tjm"
+          formControlName="tjm"
+          [class.is-invalid]="
+            form.controls.tjm.invalid && form.controls.tjm.touched
+          "
+          min="0"
+        />
+        @if (form.controls.tjm.invalid && form.controls.tjm.touched) {
+          <div class="invalid-feedback">
+            @if (form.controls.tjm.errors?.['required']) {
+              Le taux journalier est requis
+            }
+            @if (form.controls.tjm.errors?.['min']) {
+              Le taux journalier doit être positif
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Taux TVA -->
+      <div class="mb-3">
+        <label for="tauxTva" class="form-label">Taux de TVA (%)</label>
+        <input
+          type="number"
+          class="form-control"
+          id="tauxTva"
+          formControlName="tauxTva"
+          [class.is-invalid]="
+            form.controls.tauxTva.invalid && form.controls.tauxTva.touched
+          "
+          min="0"
+          max="100"
+        />
+        @if (form.controls.tauxTva.invalid && form.controls.tauxTva.touched) {
+          <div class="invalid-feedback">
+            @if (form.controls.tauxTva.errors?.['required']) {
+              Le taux de TVA est requis
+            }
+            @if (form.controls.tauxTva.errors?.['min']) {
+              Le taux de TVA doit être positif
+            }
+            @if (form.controls.tauxTva.errors?.['max']) {
+              Le taux de TVA doit être inférieur à 100
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Status -->
+      <div class="mb-3">
+        <label for="status" class="form-label">Statut</label>
+        <select
+          class="form-select"
+          id="status"
+          formControlName="status">
+          <option value="pending">En attente</option>
+          <option value="confirmed">Confirmée</option>
+          <option value="cancelled">Annulée</option>
+        </select>
+      </div>
+
+      <!-- Real-time Totals -->
+      <div class="alert alert-info mb-3">
+        <div class="d-flex justify-content-between mb-2">
+          <strong>Total HT :</strong>
+          <span>{{ totalHt() | number: '1.2-2' }} €</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <strong>Total TTC :</strong>
+          <span>{{ totalTtc() | number: '1.2-2' }} €</span>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check me-2"></i>
+          Enregistrer
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">
+          <i class="bi bi-x me-2"></i>
+          Annuler
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

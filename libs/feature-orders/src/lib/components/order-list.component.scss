@@ -1,0 +1,45 @@
+// ============================================
+// VARIABLES CSS CUSTOM DU COMPONENT
+// ============================================
+:host {
+  // Variables de layout
+  --order-list-padding: 1.5rem;
+
+  // Variables de couleurs (utilisent les variables CSS Bootstrap globales)
+  --order-list-bg: var(--bs-body-bg);
+
+  // Host display
+  display: block;
+  padding: var(--order-list-padding);
+}
+
+// ============================================
+// STYLES DU COMPONENT
+// ============================================
+.order-list-container {
+  h2 {
+    color: var(--bs-dark);
+    font-weight: 600;
+
+    i {
+      color: var(--bs-primary);
+    }
+  }
+}
+
+.table {
+  background-color: var(--bs-white);
+
+  th {
+    font-weight: 600;
+    color: var(--bs-dark);
+  }
+
+  .btn-group-sm {
+    .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+    }
+  }
+}
+

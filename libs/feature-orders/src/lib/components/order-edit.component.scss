@@ -1,0 +1,21 @@
+// ============================================
+// VARIABLES CSS CUSTOM DU COMPONENT
+// ============================================
+:host {
+  // Variables de layout
+  --order-edit-padding: 1.5rem;
+  --order-edit-max-width: 800px;
+
+  // Host display
+  display: block;
+  padding: var(--order-edit-padding);
+}
+
+// ============================================
+// STYLES DU COMPONENT
+// ============================================
+.order-edit-container {
+  max-width: var(--order-edit-max-width);
+  margin: 0 auto;
+}
+

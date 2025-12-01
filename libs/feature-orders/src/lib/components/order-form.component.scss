@@ -1,0 +1,29 @@
+// ============================================
+// VARIABLES CSS CUSTOM DU COMPONENT
+// ============================================
+:host {
+  // Variables de layout
+  --order-form-padding: 1.5rem;
+  --order-form-gap: 1rem;
+
+  // Variables de couleurs (utilisent les variables CSS Bootstrap globales)
+  --order-form-bg: var(--bs-white);
+  --order-form-border: var(--bs-border-color);
+
+  // Host display
+  display: block;
+}
+
+// ============================================
+// STYLES DU COMPONENT
+// ============================================
+.card {
+  background-color: var(--order-form-bg);
+  border-color: var(--order-form-border);
+
+  .card-title {
+    color: var(--bs-dark);
+    font-weight: 600;
+  }
+}
+

@@ -1,0 +1,101 @@
+<div class="order-list-container">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-list-ul me-2"></i>
+      Commandes
+    </h2>
+    <button class="btn btn-primary" (click)="onAdd()">
+      <i class="bi bi-plus-lg me-2"></i>
+      Nouvelle commande
+    </button>
+  </div>
+
+  <!-- Error Alert -->
+  @if (ordersService.error()) {
+    <div class="alert alert-danger" role="alert">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ ordersService.error() }}
+    </div>
+  }
+
+  <!-- Loading Spinner -->
+  @if (ordersService.loading()) {
+    <lib-spinner />
+  }
+
+  <!-- Orders Table -->
+  @if (!ordersService.loading() && ordersService.orders().length > 0) {
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th class="text-end">Nb Jours</th>
+            <th class="text-end">TJM</th>
+            <th class="text-end">Total HT</th>
+            <th class="text-end">Total TTC</th>
+            <th>Statut</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of ordersService.orders(); track order.id) {
+            <tr>
+              <td>{{ order.customer }}</td>
+              <td class="text-end">{{ order.nbDays }}</td>
+              <td class="text-end">{{ order.tjm | number: '1.2-2' }} €</td>
+              <td class="text-end">{{ order.totalHt | number: '1.2-2' }} €</td>
+              <td class="text-end">{{ order.totalTtc | number: '1.2-2' }} €</td>
+              <td>
+                <span class="badge" [class]="getStatusBadgeClass(order.status)">
+                  {{ getStatusLabel(order.status) }}
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="btn-group btn-group-sm" role="group">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    (click)="onEdit(order.id)"
+                    title="Modifier">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deleteModal"
+                    (click)="onDeletePrepare(order.id)"
+                    title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!ordersService.loading() && ordersService.orders().length === 0) {
+    <div class="alert alert-info text-center" role="alert">
+      <i class="bi bi-info-circle me-2"></i>
+      Aucune commande pour le moment.
+      <button class="btn btn-primary btn-sm ms-3" (click)="onAdd()">
+        Créer une commande
+      </button>
+    </div>
+  }
+</div>
+
+<!-- Confirm Delete Modal -->
+<lib-confirm-modal
+  [modalId]="'deleteModal'"
+  [title]="'Supprimer la commande'"
+  [message]="'Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.'"
+  (confirm)="onDeleteConfirm()"
+/>
+
