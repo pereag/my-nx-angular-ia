@@ -1,0 +1,739 @@
+---
+description: Règles spécifiques au projet Mini CRM Angular 20
+globs: ['**/*.ts', '**/*.html', '**/*.scss']
+alwaysApply: true
+---
+
+# Règles spécifiques au projet Mini CRM
+
+Ce projet utilise le MCP Angular pour les best practices Angular 20.
+Ces règles complètent le MCP avec les spécificités du projet.
+
+## Stack technique
+
+- **Angular** : 20 (utiliser le MCP Angular pour les best practices)
+- **CSS Framework** : Bootstrap 5.3+ (CSS only, pas de JS sauf pour modals)
+- **Icônes** : Bootstrap Icons
+- **Styles** : SCSS obligatoire avec variables CSS custom
+- **API** : json-server 0.17.4 + json-server-auth 2.1.0
+- **Tests** : Vitest (défaut Angular 20)
+
+### Versions exactes des dépendances API
+
+```bash
+npm install json-server@0.17.4 --save-dev
+npm install json-server-auth@2.1.0 --save-dev
+npm install @types/bootstrap --save-dev
+```
+
+### Scripts package.json
+
+```json
+{
+  "scripts": {
+    "ng": "ng",
+    "start": "nx serve mini-crm",
+    "build": "nx build mini-crm",
+    "watch": "nx build mini-crm --watch --configuration development",
+    "test": "nx test mini-crm",
+    "test:watch": "nx test mini-crm --watch",
+    "test:coverage": "nx test mini-crm --coverage",
+    "lint": "nx lint mini-crm",
+    "lint:fix": "nx lint mini-crm --fix",
+    "lint:all": "nx run-many --target=lint --all",
+    "lint:affected": "nx affected --target=lint",
+    "server": "json-server --watch db.json --port 3000",
+    "server:auth": "json-server-auth db.json --port 3000",
+    "dev": "concurrently \"npm start\" \"npm run server\"",
+    "docs": "compodoc -p apps/mini-crm/tsconfig.app.json -s --port 8080",
+    "docs:build": "compodoc -p apps/mini-crm/tsconfig.app.json -d docs/compodoc",
+    "docs:coverage": "compodoc -p apps/mini-crm/tsconfig.app.json --coverageTest 80",
+    "docs:watch": "compodoc -p apps/mini-crm/tsconfig.app.json -s --watch",
+    "audit": "npm run build && lhci autorun",
+    "audit:accessibility": "npm run build && lhci autorun --only-categories=accessibility",
+    "audit:performance": "npm run build && lhci autorun --only-categories=performance",
+    "report": "npm run docs:build && npm run audit",
+    "report:serve": "concurrently \"npm run docs\" \"npm run audit\"",
+    "analyze": "nx build mini-crm --configuration production --source-map && source-map-explorer dist/apps/mini-crm/browser/**/*.js --html dist/bundle-report.html",
+    "analyze:json": "nx build mini-crm --configuration production --source-map && source-map-explorer dist/apps/mini-crm/browser/**/*.js --json dist/bundle-report.json",
+    "analyze:serve": "npm run analyze && npx http-server dist -o bundle-report.html -p 8081",
+    "analyze:quick": "source-map-explorer dist/apps/mini-crm/browser/**/*.js --html dist/bundle-report.html && npx http-server dist -o bundle-report.html -p 8081",
+    "graph": "nx graph",
+    "graph:app": "nx graph --focus=mini-crm",
+    "graph:affected": "nx graph --affected",
+    "graph:ui": "nx graph --focus=shared-ui",
+    "graph:data": "nx graph --focus=data-access",
+    "graph:feature-auth": "nx graph --focus=feature-auth",
+    "graph:feature-orders": "nx graph --focus=feature-orders",
+    "graph:layout": "nx graph --focus=layout",
+    "graph:libs": "nx graph --exclude=mini-crm",
+    "graph:show": "nx show project mini-crm --web"
+  }
+}
+```
+
+## Conventions Angular 20
+
+### Components
+
+```typescript
+@Component({
+  selector: 'lib-example', // Préfixe "app" pour composants dans apps/, "lib" OBLIGATOIRE pour composants dans libs/
+  standalone: true,
+  imports: [],
+  templateUrl: './example.component.html', // Fichier séparé obligatoire pour components > 20 lignes
+  styleUrl: './example.component.scss', // TOUJOURS fichier SCSS séparé
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ExampleComponent {
+  // Services avec inject()
+  private readonly service = inject(MyService);
+
+  // Inputs/Outputs avec fonctions
+  data = input<Data>();
+  dataChange = output<Data>();
+
+  // État avec signals
+  items = signal<Item[]>([]);
+  loading = signal(false);
+
+  // Valeurs dérivées avec computed
+  count = computed(() => this.items().length);
+}
+```
+
+### Templates
+
+**Règle claire** :
+
+- **Templates inline** : Acceptés UNIQUEMENT pour components < 20 lignes de template
+- **Fichiers .html séparés** : OBLIGATOIRES pour components ≥ 20 lignes
+- **TOUJOURS** : Fichier SCSS séparé, même pour petit component avec template inline
+
+Exemple template inline (petit component) :
+
+```typescript
+@Component({
+  template: `
+    <div class="spinner-container">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+    </div>
+  `,
+  styleUrl: './spinner.component.scss',  // ← TOUJOURS fichier SCSS même pour petit component
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+```
+
+Exemple fichier séparé (component ≥ 20 lignes) :
+
+```typescript
+@Component({
+  templateUrl: './order-list.component.html',  // ← Fichier séparé obligatoire
+  styleUrl: './order-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+```
+
+### Règles obligatoires
+
+- `changeDetection: ChangeDetectionStrategy.OnPush` sur tous les components
+- `inject()` pour les dépendances (jamais constructor injection)
+- `input()` / `output()` (jamais décorateurs @Input/@Output)
+- `signal()`, `computed()`, `linkedSignal()` pour l'état
+- `@if`, `@for`, `@switch` dans les templates (jamais *ngIf, *ngFor)
+- `[class]` pour les classes conditionnelles (jamais ngClass)
+- Jamais `[ngStyle]` - utiliser classes CSS
+
+## Styles SCSS - Règles STRICTES
+
+### ❌ INTERDIT
+
+```typescript
+// ❌ JAMAIS de styles inline dans @Component
+@Component({
+  styles: [`...`]  // INTERDIT
+})
+
+// ❌ JAMAIS de style inline dans HTML
+<div style="color: red">  // INTERDIT
+
+// ❌ JAMAIS de binding style
+<div [style.color]="color">  // INTERDIT
+
+// ❌ JAMAIS de ngStyle
+<div [ngStyle]="{...}">  // INTERDIT
+```
+
+### ✅ OBLIGATOIRE
+
+```typescript
+// ✅ TOUJOURS fichier SCSS séparé
+@Component({
+  styleUrl: './component.component.scss'
+})
+```
+
+## Variables CSS - Approche privilégiée
+
+### Principe : Variables CSS custom partout
+
+On privilégie les **variables CSS custom** (`--xxx`) pour :
+
+- Meilleure maintenabilité
+- Theming possible par le parent
+- Runtime modifiable (contrairement aux variables SCSS)
+
+### Structure d'un fichier SCSS
+
+```scss
+// ============================================
+// 1. VARIABLES CSS CUSTOM DU COMPONENT
+// ============================================
+// IMPORTANT : Bootstrap est déjà chargé globalement dans project.json
+// Utiliser directement les variables CSS Bootstrap (var(--bs-primary), etc.)
+:host {
+  // Variables de layout
+  --component-padding: 1rem;
+  --component-gap: 0.5rem;
+
+  // Variables de couleurs (utilisent les variables CSS Bootstrap globales)
+  --component-bg: var(--bs-light);
+  --component-text: var(--bs-dark);
+  --component-border: var(--bs-border-color);
+  --component-accent: var(--bs-primary);
+
+  // Variables de taille
+  --component-width: 250px;
+  --component-radius: var(--bs-border-radius);
+
+  // Host display
+  display: block;
+}
+
+// ============================================
+// 3. STYLES DU COMPONENT (utilisent les variables CSS)
+// ============================================
+.container {
+  padding: var(--component-padding);
+  background-color: var(--component-bg);
+  color: var(--component-text);
+  border: 1px solid var(--component-border);
+  border-radius: var(--component-radius);
+  gap: var(--component-gap);
+}
+
+.accent {
+  color: var(--component-accent);
+}
+
+// ============================================
+// 4. ÉTATS ET VARIANTES
+// ============================================
+.container--loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+// ============================================
+// 5. RESPONSIVE (si nécessaire)
+// ============================================
+@media (max-width: 768px) {
+  :host {
+    --component-padding: 0.5rem;
+    --component-width: 100%;
+  }
+}
+```
+
+### Avantages des variables CSS
+
+```scss
+// Le parent peut surcharger les variables
+:host-context(.dark-theme) {
+  --component-bg: var(--bs-dark);
+  --component-text: var(--bs-light);
+}
+
+// Ou le parent via CSS
+.dark-theme app-sidebar {
+  --component-bg: #1a1a1a;
+}
+```
+
+### Variables CSS courantes à définir
+
+| Variable              | Usage                | Valeur Bootstrap typique                   |
+| --------------------- | -------------------- | ------------------------------------------ |
+| `--component-bg`      | Fond du component    | `var(--bs-white)`, `var(--bs-light)`       |
+| `--component-text`    | Couleur texte        | `var(--bs-body-color)`, `var(--bs-dark)`   |
+| `--component-border`  | Bordures             | `var(--bs-border-color)`                   |
+| `--component-accent`  | Couleur d'accent     | `var(--bs-primary)`                        |
+| `--component-padding` | Padding interne      | `1rem` (ou classes Bootstrap `p-3`, `p-4`) |
+| `--component-gap`     | Espacement flex/grid | `0.5rem` (ou classes Bootstrap `gap-2`)    |
+| `--component-radius`  | Border radius        | `var(--bs-border-radius)`                  |
+
+### Variables CSS Bootstrap disponibles (déjà chargées globalement)
+
+Couleurs :
+
+- `var(--bs-primary)`, `var(--bs-secondary)`, `var(--bs-success)`, `var(--bs-danger)`, `var(--bs-warning)`, `var(--bs-info)`, `var(--bs-light)`, `var(--bs-dark)`
+- `var(--bs-body-color)`, `var(--bs-body-bg)`, `var(--bs-border-color)`
+
+Espacements :
+
+- Classes utilitaires Bootstrap : `mb-3`, `p-4`, `gap-2`, etc.
+
+Bordures :
+
+- `var(--bs-border-radius)`, `var(--bs-border-radius-sm)`, `var(--bs-border-radius-lg)`
+
+**Note** : Ne pas importer Bootstrap dans les fichiers SCSS individuels. Utiliser directement les variables CSS Bootstrap avec `var(--bs-*)`.
+
+## Hiérarchie des styles (priorité)
+
+1. **Classes utilitaires Bootstrap** : `mb-3`, `d-flex`, `text-center`, `gap-2`
+2. **Composants Bootstrap** : `.card`, `.table`, `.alert`, `.btn`
+3. **Variables CSS custom** dans fichier SCSS du component
+4. **Styles custom** utilisant les variables CSS
+
+```html
+<!-- ✅ BON : Utilitaires Bootstrap + classes custom -->
+<div class="d-flex gap-3 mb-4">
+  <div class="card custom-card">
+    <!-- contenu -->
+  </div>
+</div>
+```
+
+```scss
+// custom-card utilise des variables CSS
+.custom-card {
+  background: var(--card-bg);
+  border-color: var(--card-border);
+}
+```
+
+## Bootstrap 5 - Composants à utiliser
+
+### Layout
+
+- `.container`, `.container-fluid`
+- `.row`, `.col-*`
+- `.d-flex`, `.d-grid`, `.gap-*`
+
+### Composants UI
+
+- **Cards** : `.card`, `.card-header`, `.card-body`, `.card-footer`
+- **Tables** : `.table`, `.table-striped`, `.table-hover`
+- **Alerts** : `.alert`, `.alert-success`, `.alert-danger`, `.alert-warning`, `.alert-info`
+- **Modals** : `.modal`, `.modal-dialog`, `.modal-content`
+- **Spinner** : `.spinner-border`, `.text-primary`
+- **Forms** : `.form-control`, `.form-label`, `.is-invalid`, `.invalid-feedback`
+- **Buttons** : `.btn`, `.btn-primary`, `.btn-outline-*`, `.btn-sm`
+- **Badges** : `.badge`, `.bg-success`, `.bg-warning`
+
+### Bootstrap Icons (préfixe bi-)
+
+- Navigation : `bi-list-ul`, `bi-house`, `bi-gear`
+- Actions : `bi-plus-lg`, `bi-pencil`, `bi-trash`, `bi-check`, `bi-x`
+- Auth : `bi-box-arrow-in-right`, `bi-person-plus`, `bi-box-arrow-right`
+- App : `bi-briefcase-fill`
+
+## API json-server
+
+### Configuration
+
+- **URL de base** : `http://localhost:3000`
+- **json-server** : 0.17.4 (version stable, pas beta)
+- **json-server-auth** : 2.1.0
+
+### Endpoints
+
+| Méthode | Endpoint      | Description                    |
+| ------- | ------------- | ------------------------------ |
+| GET     | `/orders`     | Liste des commandes            |
+| GET     | `/orders/:id` | Une commande                   |
+| POST    | `/orders`     | Créer commande                 |
+| PUT     | `/orders/:id` | Modifier commande              |
+| DELETE  | `/orders/:id` | Supprimer commande             |
+| POST    | `/register`   | Inscription (json-server-auth) |
+| POST    | `/login`      | Connexion (json-server-auth)   |
+
+### Body pour auth
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+## Conventions de nommage
+
+| Type          | Convention                | Exemple                                        |
+| ------------- | ------------------------- | ---------------------------------------------- |
+| Components    | kebab-case.component.ts   | `order-list.component.ts`                      |
+| Services      | kebab-case.service.ts     | `orders.service.ts`                            |
+| Models        | kebab-case.model.ts       | `order.model.ts`                               |
+| Guards        | kebab-case.guard.ts       | `auth.guard.ts`                                |
+| Interceptors  | kebab-case.interceptor.ts | `auth.interceptor.ts`                          |
+| Routes        | kebab-case.routes.ts      | `orders.routes.ts`                             |
+| Variables CSS | --component-property      | `--sidebar-width`                              |
+| Libs Nx       | kebab-case                | `shared-ui`, `data-access`, `feature-contacts` |
+
+### Selectors de composants
+
+- **Composants dans `apps/`** : Préfixe `app-` (ex: `app-root`)
+- **Composants dans `libs/`** : Préfixe `lib-` OBLIGATOIRE pour TOUS les composants dans toutes les libs (ex: `lib-spinner`, `lib-confirm-modal`, `lib-layout`, `lib-header`, `lib-sidebar`, `lib-sign-in`, `lib-order-list`)
+  - **Configuration ESLint** : Tous les fichiers `libs/*/eslint.config.mjs` doivent utiliser `prefix: 'lib'` (pas de `'app'`)
+  - **Aucune exception** : Même les composants de layout utilisés dans `app.component.html` utilisent `lib-`
+
+## Structure Nx - Imports avec alias
+
+### Alias d'import générés par Nx
+
+Nx génère automatiquement des alias TypeScript dans `tsconfig.base.json` (créé lors de la génération de libs) :
+
+```typescript
+// ✅ Utiliser les alias Nx
+import { ButtonComponent } from '@mini-crm/shared-ui';
+import { ContactsService } from '@mini-crm/data-access';
+import { ContactListComponent } from '@mini-crm/feature-contacts';
+
+// ❌ Éviter les imports relatifs entre libs
+// import { ButtonComponent } from '../../../libs/shared-ui/src/lib/button.component';
+```
+
+### Créer une nouvelle lib Nx
+
+```bash
+# Lib UI partagée
+npx nx g @nx/angular:library shared-ui --unitTestRunner=vitest
+
+# Lib data-access
+npx nx g @nx/angular:library data-access --unitTestRunner=vitest
+
+# Lib feature
+npx nx g @nx/angular:library feature-contacts --unitTestRunner=vitest
+```
+
+Nx génère automatiquement :
+
+- L'alias TypeScript (`@mini-crm/shared-ui`)
+- Le `project.json` avec les targets (build, test, lint)
+- La structure de dossiers standard
+
+## MCP Angular
+
+Avant de créer un component ou service, utiliser le MCP Angular :
+
+```
+get_best_practices("component creation")
+get_best_practices("service patterns")
+get_best_practices("signals")
+search_documentation("error message")
+```
+
+## Checklist nouveau component
+
+1. [ ] Utiliser MCP Angular (get_best_practices)
+2. [ ] Créer dans la bonne lib Nx (`shared-ui`, `data-access`, `feature-*`)
+3. [ ] `standalone: true`
+4. [ ] `changeDetection: ChangeDetectionStrategy.OnPush`
+5. [ ] `inject()` pour les services
+6. [ ] `input()` / `output()` pour communication
+7. [ ] `signal()` / `computed()` pour l'état
+8. [ ] Template : `@if`, `@for` avec `track`
+9. [ ] Fichier SCSS séparé (jamais styles inline)
+10. [ ] Variables CSS custom pour les valeurs du component
+11. [ ] Classes Bootstrap en priorité
+12. [ ] Imports avec alias Nx (`@mini-crm/...`)
+
+## Commentaires et Documentation (JSDoc/TSDoc + Compodoc)
+
+### Philosophie
+
+- ✅ Privilégier un code **auto-documenté** (noms explicites, types clairs)
+- ✅ Commenter **le pourquoi**, pas **le quoi**
+- ✅ Documenter **l'API publique** pour Compodoc
+- ❌ Éviter les commentaires redondants
+
+### Outils
+
+- **Compodoc** : Documentation automatique Angular (`npm run docs`)
+- **TypeDoc** : Documentation TypeScript générique
+- **ESLint** : Validation JSDoc avec règles `jsdoc/*`
+
+### Quand Documenter (OBLIGATOIRE)
+
+#### 1. Services Publics (`data-access/`)
+
+````typescript
+/**
+ * Service for managing orders data and operations.
+ *
+ * Handles all HTTP requests related to orders including CRUD operations.
+ *
+ * @usageNotes
+ * Inject this service in components or other services:
+ * ```typescript
+ * private ordersService = inject(OrdersService);
+ * ```
+ *
+ * @see Order
+ * @category Data Access
+ */
+@Injectable({ providedIn: 'root' })
+export class OrdersService {
+  /**
+   * Retrieves all orders from the API.
+   *
+   * @returns Observable of orders array
+   * @throws {HttpErrorResponse} When API request fails
+   *
+   * @example
+   * ```typescript
+   * this.ordersService.getOrders().subscribe({
+   *   next: (orders) => console.log(orders)
+   * });
+   * ```
+   */
+  getOrders(): Observable<Order[]> {
+    return this.http.get<Order[]>(`${API_URL}/orders`);
+  }
+}
+````
+
+#### 2. Composants Réutilisables (`shared-ui/`)
+
+````typescript
+/**
+ * Spinner component for loading states.
+ *
+ * Displays a Bootstrap spinner with customizable size and color.
+ *
+ * @usageNotes
+ * ### Basic Usage
+ * ```html
+ * <lib-spinner />
+ * ```
+ *
+ * @see SkeletonComponent
+ * @category Shared UI
+ */
+@Component({
+  selector: 'lib-spinner',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class SpinnerComponent {
+  /**
+   * Size of the spinner
+   * @default 'md'
+   */
+  size = input<'sm' | 'md' | 'lg'>('md');
+
+  /**
+   * Color variant using Bootstrap colors
+   * @default 'primary'
+   */
+  variant = input<'primary' | 'secondary'>('primary');
+}
+````
+
+#### 3. Signals et State Management
+
+```typescript
+/**
+ * Current loading state
+ * @internal - Not exposed in public API
+ */
+private loading = signal(false);
+
+/**
+ * List of orders
+ * @readonly - Use methods to modify
+ */
+orders = signal<Order[]>([]);
+
+/**
+ * Total number of orders
+ * @computed
+ */
+totalOrders = computed(() => this.orders().length);
+
+/**
+ * Selected order, linked to orders list
+ * @linkedSignal
+ */
+selectedOrder = linkedSignal(() => this.orders()[0]);
+```
+
+#### 4. Guards, Interceptors, Validators
+
+````typescript
+/**
+ * Authentication guard to protect routes.
+ *
+ * Redirects to login page if user is not authenticated.
+ *
+ * @usageNotes
+ * Apply to routes in routing configuration:
+ * ```typescript
+ * {
+ *   path: 'orders',
+ *   canActivate: [authGuard]
+ * }
+ * ```
+ *
+ * @see AuthService
+ * @category Security
+ */
+export const authGuard: CanActivateFn = (route, state) => {
+  // Implementation
+};
+````
+
+#### 5. Models et Interfaces
+
+```typescript
+/**
+ * Represents an order in the system.
+ *
+ * @category Models
+ * @see OrdersService
+ */
+export interface Order {
+  /**
+   * Unique identifier
+   * @format uuid
+   */
+  id: string;
+
+  /**
+   * Order title/name
+   * @minLength 3
+   * @maxLength 100
+   */
+  title: string;
+
+  /**
+   * Order amount in euros
+   * @minimum 0
+   */
+  amount: number;
+
+  /**
+   * Current order status
+   * @default 'pending'
+   */
+  status: OrderStatus;
+}
+
+/**
+ * Order status enumeration
+ * @category Models
+ */
+export enum OrderStatus {
+  /** Order is awaiting processing */
+  Pending = 'pending',
+  /** Order has been confirmed */
+  Confirmed = 'confirmed',
+}
+```
+
+### Documentation des Inputs/Outputs
+
+```typescript
+/**
+ * User data to display in the card
+ * @required
+ */
+user = input.required<User>();
+
+/**
+ * Optional CSS classes to apply
+ */
+customClass = input<string>('');
+
+/**
+ * Emitted when user clicks the edit button
+ * @event
+ * @param user - The edited user data
+ */
+userEdited = output<User>();
+```
+
+### Quand NE PAS Commenter
+
+- ❌ Getters/Setters simples sans logique
+- ❌ Tests unitaires simples (le `it()` suffit)
+- ❌ Code évident (ex: `this.loading.set(true)`)
+- ❌ Variables privées internes triviales
+- ❌ Méthodes privées simples (sauf logique complexe)
+
+### Tags Compodoc Essentiels
+
+| Tag           | Usage                 | Exemple                        |
+| ------------- | --------------------- | ------------------------------ |
+| `@usageNotes` | Comment utiliser      | Exemples d'usage               |
+| `@see`        | Références croisées   | `@see OrdersService`           |
+| `@category`   | Catégorie Compodoc    | Data Access, UI, Feature       |
+| `@throws`     | Erreurs possibles     | `@throws {HttpErrorResponse}`  |
+| `@deprecated` | Code obsolète         | Migration vers nouvelle API    |
+| `@example`    | Exemples de code      | Blocs de code illustratifs     |
+| `@default`    | Valeur par défaut     | `@default 'primary'`           |
+| `@param`      | Description paramètre | `@param user - User data`      |
+| `@returns`    | Valeur de retour      | `@returns Observable<Order[]>` |
+| `@internal`   | API interne           | Ne pas utiliser                |
+| `@readonly`   | Lecture seule         | Signal en lecture seule        |
+| `@computed`   | Signal computed       | Valeur dérivée                 |
+| `@event`      | Output/EventEmitter   | Événement émis                 |
+
+### Tags Avancés (Optionnels)
+
+```typescript
+/**
+ * @since 2.0.0
+ * @version 2.1.0
+ * @alpha  // ou @beta, @experimental
+ * @public     // Exposé dans l'API (défaut)
+ * @protected  // Héritage uniquement
+ * @private    // Usage interne
+ */
+```
+
+### Génération de la Documentation
+
+#### Scripts disponibles
+
+```bash
+# Générer et servir la doc (mode dev)
+npm run docs
+
+# Build statique
+npm run docs:build
+
+# Vérifier la couverture
+npm run docs:coverage
+```
+
+#### Configuration
+
+La configuration Compodoc est dans `.compodocrc.json` à la racine du projet.
+
+### Checklist Documentation
+
+Avant de commit :
+
+- [ ] Services publics documentés avec JSDoc complet
+- [ ] Composants shared-ui avec `@usageNotes` et exemples
+- [ ] Tous les inputs/outputs publics documentés
+- [ ] Signals publics avec `@readonly` ou `@computed`
+- [ ] Guards/Interceptors avec `@usageNotes`
+- [ ] Models/Interfaces avec descriptions des propriétés
+- [ ] Tags `@category` pour organisation Compodoc
+- [ ] Tags `@see` pour références croisées
+- [ ] Pas de code commenté mort
+- [ ] Coverage Compodoc > 80% (vérifier avec `npm run docs:coverage`)

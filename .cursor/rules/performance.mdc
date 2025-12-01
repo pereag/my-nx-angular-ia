@@ -1,0 +1,418 @@
+---
+description: Optimisation des performances et éco-développement
+globs: ['**/*.ts', '**/*.html', '**/*.scss']
+---
+
+# Performance et Éco-Développement
+
+Ce document définit les **pratiques d'optimisation des performances** pour réduire l'empreinte carbone, améliorer l'expérience utilisateur, et respecter les standards web modernes.
+
+**Note Éco-Responsable** : Optimiser les performances réduit automatiquement l'empreinte carbone de l'application (moins de CPU, moins de bande passante, moins d'énergie consommée).
+
+**Note** : Les règles Angular de base (OnPush, signals, track, lazy loading) sont déjà **OBLIGATOIRES** dans `project.mdc` et `architecture.mdc`. Ce fichier se concentre sur les **optimisations avancées**.
+
+---
+
+## 1. Tree-Shaking et Imports Spécifiques
+
+### Principe
+
+Le **tree-shaking** élimine le code inutilisé du bundle final. Pour qu'il fonctionne, **importer uniquement ce qui est nécessaire**.
+
+### ✅ Imports Spécifiques
+
+```typescript
+// ✅ BON : Import spécifique (tree-shakeable)
+import { map, filter, take } from 'rxjs/operators';
+import { formatDate } from '@angular/common';
+
+// ❌ MAUVAIS : Import du module entier
+import * as _ from 'lodash'; // 70KB+ dans le bundle !
+import * as moment from 'moment'; // 230KB !
+```
+
+### Alternatives Légères
+
+| Librairie Lourde | Taille | Alternative Légère | Taille |
+|------------------|--------|--------------------|--------|
+| `lodash` | 70KB | Fonctions natives JS | 0KB |
+| `moment.js` | 230KB | `date-fns` (imports spécifiques) | 5-10KB/fonction |
+| `jquery` | 90KB | DOM natif ou Angular | 0KB |
+| `rxjs` (complet) | 150KB | Imports spécifiques uniquement | 5-20KB |
+
+**Impact** : Réduction de 30-70% du bundle.
+
+---
+
+## 2. NgOptimizedImage (OBLIGATOIRE)
+
+### Principe
+
+`NgOptimizedImage` est une directive Angular qui :
+- ✅ Lazy load les images automatiquement
+- ✅ Génère des `srcset` pour le responsive
+- ✅ Priorise les images above-the-fold
+- ✅ Détecte les erreurs de performance (dimensions manquantes, etc.)
+
+### ✅ Utilisation Correcte
+
+```typescript
+// 1. Importer la directive
+import { NgOptimizedImage } from '@angular/common';
+
+@Component({
+  imports: [NgOptimizedImage],
+})
+export class MyComponent {}
+```
+
+```html
+<!-- ✅ BON : Image avec lazy loading automatique -->
+<img ngSrc="assets/logo.png" width="200" height="100" alt="Logo" />
+
+<!-- ✅ BON : Image prioritaire (above-the-fold) -->
+<img ngSrc="hero.jpg" width="1200" height="600" priority alt="Hero" />
+
+<!-- ❌ MAUVAIS : Pas d'optimisation -->
+<img src="logo.png" />
+```
+
+### Configuration Recommandée
+
+```html
+<!-- Lazy loading (par défaut) -->
+<img ngSrc="image.jpg" width="400" height="300" alt="..." />
+
+<!-- Priority pour images importantes (hero, logo) -->
+<img ngSrc="hero.jpg" width="1200" height="600" priority alt="..." />
+
+<!-- Placeholder pour améliorer le LCP -->
+<img ngSrc="large.jpg" width="800" height="600" placeholder alt="..." />
+```
+
+### Formats d'Image Recommandés
+
+- ✅ **WebP** : Réduction de 25-35% vs JPEG
+- ✅ **AVIF** : Réduction de 50-80% vs JPEG (support moderne)
+- ⚠️ **PNG** : Uniquement pour transparence ou diagrammes
+- ❌ **JPEG** : Fallback uniquement (remplacer par WebP si possible)
+
+**Impact** : Réduction de 50-80% du poids des images.
+
+---
+
+## 3. Cache HTTP et Réduction des Requêtes
+
+### Cache dans les Services (Pattern Signal)
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class DataService {
+  private readonly http = inject(HttpClient);
+  
+  // Cache
+  private cache = signal<Data[]>([]);
+  private cacheTimestamp = signal<number>(0);
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  
+  // Publics
+  data = this.cache.asReadonly();
+  
+  loadData(): void {
+    const now = Date.now();
+    
+    // Utiliser le cache si valide
+    if (this.cache().length > 0 && (now - this.cacheTimestamp()) < this.CACHE_DURATION) {
+      return; // Cache hit
+    }
+    
+    // Sinon, fetch depuis l'API
+    this.http.get<Data[]>('/api/data').subscribe({
+      next: (data) => {
+        this.cache.set(data);
+        this.cacheTimestamp.set(Date.now());
+      }
+    });
+  }
+}
+```
+
+### HTTP Interceptor avec Cache-Control
+
+```typescript
+export const cacheInterceptor: HttpInterceptorFn = (req, next) => {
+  // Ajouter Cache-Control uniquement pour GET
+  if (req.method !== 'GET') return next(req);
+  
+  const modifiedReq = req.clone({
+    setHeaders: {
+      'Cache-Control': 'max-age=300' // 5 minutes
+    }
+  });
+  
+  return next(modifiedReq);
+};
+```
+
+**Impact** : Réduction de 60-80% des requêtes HTTP redondantes.
+
+---
+
+## 4. Analyse du Bundle (OBLIGATOIRE)
+
+### Scripts Disponibles
+
+```bash
+# Analyse complète (build + analyse)
+npm run analyze
+
+# Analyse avec ouverture automatique du rapport
+npm run analyze:serve
+
+# Analyse rapide (build déjà fait)
+npm run analyze:quick
+
+# Export JSON (pour CI/CD ou comparaison)
+npm run analyze:json
+```
+
+### Seuils d'Alerte
+
+| Type de Bundle | Taille Max (Raw) | Taille Max (Gzip) |
+|----------------|------------------|-------------------|
+| **Initial Bundle** | 200 KB | 60 KB |
+| **Lazy Chunk** | 50 KB | 15 KB |
+| **Total** | 500 KB | 150 KB |
+
+### Checklist Avant Commit
+
+- [ ] Exécuter `npm run analyze:quick`
+- [ ] Vérifier l'augmentation de taille :
+  - ✅ < 20 KB : OK
+  - ⚠️ 20-50 KB : Justifier dans le commit message
+  - ❌ > 50 KB : Refactoring requis
+- [ ] Identifier la cause si augmentation importante
+- [ ] Remplacer les imports lourds par des alternatives légères
+
+**Documentation complète** : `docs/BUNDLE-ANALYSIS-GUIDE.md`
+
+---
+
+## 5. Optimisation des Bundles
+
+### Éviter les Dépendances Lourdes
+
+**Liste noire** (alternatives légères) :
+
+```typescript
+// ❌ INTERDIT : lodash (70KB)
+import _ from 'lodash';
+const sorted = _.sortBy(items, 'date');
+
+// ✅ BON : Fonctions natives (0KB)
+const sorted = items.sort((a, b) => a.date - b.date);
+
+// ❌ INTERDIT : moment.js (230KB)
+import moment from 'moment';
+const formatted = moment(date).format('DD/MM/YYYY');
+
+// ✅ BON : date-fns avec import spécifique (5KB)
+import { format } from 'date-fns';
+const formatted = format(date, 'dd/MM/yyyy');
+```
+
+### Lazy Loading des Features
+
+**Déjà documenté dans `architecture.mdc`**, mais rappel :
+
+```typescript
+// ✅ BON : Lazy loading
+const routes: Routes = [
+  {
+    path: 'orders',
+    loadChildren: () => import('@mini-crm/feature-orders').then(m => m.ORDERS_ROUTES)
+  }
+];
+
+// ❌ MAUVAIS : Import direct (bundle initial)
+import { OrdersComponent } from './orders/orders.component';
+```
+
+---
+
+## 6. Purge CSS Inutilisé
+
+### Configuration Automatique
+
+Angular CLI purge automatiquement le CSS inutilisé en production. Vérifier la configuration :
+
+```json
+// apps/mini-crm/project.json
+{
+  "targets": {
+    "build": {
+      "configurations": {
+        "production": {
+          "optimization": {
+            "styles": {
+              "minify": true,
+              "inlineCritical": true
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### Utiliser les Classes Bootstrap avec Parcimonie
+
+Bootstrap complet = **200KB**. Utiliser uniquement les classes nécessaires.
+
+**Impact** : Réduction de 60-80% du CSS (200KB → 40-60KB).
+
+---
+
+## 7. Variables CSS vs SCSS
+
+### Préférer les Variables CSS
+
+```scss
+// ✅ BON : Variables CSS (runtime modifiable + bundle plus petit)
+:host {
+  --component-bg: var(--bs-light);
+  --component-text: var(--bs-dark);
+}
+
+.container {
+  background-color: var(--component-bg);
+  color: var(--component-text);
+}
+
+// ❌ MOINS BON : Variables SCSS (compile-time seulement)
+$bg: $light;
+$text: $dark;
+
+.container {
+  background-color: $bg;
+  color: $text;
+}
+```
+
+**Impact** : CSS plus petit + theming dynamique possible.
+
+---
+
+## 8. Éviter les Calculs Redondants
+
+### ❌ INTERDIT : Fonctions dans les Templates
+
+```html
+<!-- ❌ MAUVAIS : Fonction appelée à chaque cycle -->
+<div>{{ getTotalPrice() }}</div>
+```
+
+```typescript
+// ❌ MAUVAIS
+getTotalPrice() {
+  return this.items().reduce((sum, item) => sum + item.price, 0);
+}
+```
+
+### ✅ OBLIGATOIRE : Computed Signals
+
+```typescript
+// ✅ BON : Computed (mis en cache automatiquement)
+totalPrice = computed(() => 
+  this.items().reduce((sum, item) => sum + item.price, 0)
+);
+```
+
+```html
+<!-- ✅ BON : Signal utilisé directement -->
+<div>{{ totalPrice() }}</div>
+```
+
+**Impact** : Réduction de 80-95% des calculs redondants.
+
+---
+
+## 9. Métriques et Monitoring
+
+### Lighthouse CI (Déjà Configuré)
+
+Votre projet a déjà Lighthouse CI configuré. Utiliser :
+
+```bash
+# Auditer l'app (performance, accessibilité, SEO, best practices)
+npm run audit
+
+# Auditer seulement l'accessibilité
+npm run audit:accessibility
+
+# Auditer seulement la performance
+npm run audit:performance
+
+# Générer tous les rapports
+npm run report
+```
+
+### Métriques Clés (Web Vitals)
+
+| Métrique | Objectif | Impact Éco | Déjà Audité ? |
+|----------|----------|------------|---------------|
+| **LCP** (Largest Contentful Paint) | < 2.5s | ⚠️ Élevé | ✅ Oui |
+| **FID** (First Input Delay) | < 100ms | ⚠️ Moyen | ✅ Oui |
+| **CLS** (Cumulative Layout Shift) | < 0.1 | ⚠️ Faible | ✅ Oui |
+| **TBT** (Total Blocking Time) | < 300ms | ⚠️ Élevé | ✅ Oui |
+| **Bundle Size** | < 200KB | ⚠️ Moyen | ✅ Oui (analyze) |
+
+**Documentation complète** : `docs/LIGHTHOUSE-GUIDE.md`
+
+---
+
+## 10. Checklist Performance (Avant Commit)
+
+Avant de créer un nouveau composant/service :
+
+- [ ] **OnPush activé** (déjà obligatoire dans `project.mdc`)
+- [ ] **Track dans @for** (déjà obligatoire dans `project.mdc`)
+- [ ] **NgOptimizedImage** pour toutes les images
+- [ ] **Imports spécifiques** (pas d'imports `*`)
+- [ ] **Pas de dépendances lourdes** (lodash, moment, etc.)
+- [ ] **Cache pour requêtes GET répétées**
+- [ ] **Computed pour valeurs dérivées** (pas de fonctions dans templates)
+- [ ] **Variables CSS** au lieu de SCSS quand possible
+- [ ] **Lazy loading** pour features (déjà dans `architecture.mdc`)
+- [ ] **Analyse du bundle** : `npm run analyze:quick`
+  - Augmentation < 20KB ? ✅ OK
+  - Augmentation > 20KB ? ⚠️ Justifier
+  - Augmentation > 50KB ? ❌ Refactoring
+
+---
+
+## 11. Ressources
+
+### Documentation Officielle
+
+- [Angular Performance Guide](https://angular.dev/best-practices/runtime-performance)
+- [Web.dev Performance](https://web.dev/performance/)
+- [Web Vitals](https://web.dev/vitals/)
+
+### Outils Disponibles
+
+- **Lighthouse CI** : `npm run audit` (déjà configuré)
+- **Bundle Analyzer** : `npm run analyze` (déjà configuré)
+- **Compodoc** : `npm run docs` (documentation)
+- **SonarJS** : `npm run lint` (qualité de code)
+
+### Éco-Développement
+
+- [Green Software Foundation](https://greensoftware.foundation/)
+- [Écoconception Web](https://www.ecoconceptionweb.com/)
+- [Website Carbon Calculator](https://www.websitecarbon.com/)
+
+---
+
+**Note** : Les règles de base (OnPush, signals, track, lazy loading) sont déjà **OBLIGATOIRES** et documentées dans `project.mdc` et `architecture.mdc`. Ce fichier complète avec des **optimisations avancées**.

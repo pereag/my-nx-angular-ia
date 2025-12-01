@@ -1,0 +1,32 @@
+name: CI Main (Strict)
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci --legacy-peer-deps
+
+      # Vérifie TOUT : lint + test + build
+      - run: npx nx run-many -t lint test build
+
+      # Fix CI si échec
+      - run: npx nx fix-ci
+        if: always()

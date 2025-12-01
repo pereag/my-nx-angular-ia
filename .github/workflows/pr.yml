@@ -1,0 +1,31 @@
+name: CI Pull Request (Souple)
+
+on:
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci --legacy-peer-deps
+
+      # Vérifie SEULEMENT que ça compile (pas lint ni test)
+      - run: npx nx affected -t build --base=origin/main
+
+      # Fix CI si échec
+      - run: npx nx fix-ci
+        if: always()
+
