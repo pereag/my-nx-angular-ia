@@ -4,12 +4,12 @@
     {
       "id": "1",
       "customer": "Acme Corp",
-      "nbDays": 10,
+      "nbDays": 9,
       "tjm": 500,
       "tauxTva": 20,
-      "totalHt": 5000,
-      "totalTtc": 6000,
-      "status": "pending"
+      "status": "pending",
+      "totalHt": 4500,
+      "totalTtc": 5400
     },
     {
       "id": "2",
@@ -30,6 +30,16 @@
       "totalHt": 6750,
       "totalTtc": 8100,
       "status": "pending"
+    },
+    {
+      "id": "ma78Kdk",
+      "customer": "Norman Freeman",
+      "nbDays": 1,
+      "tjm": 100000000000000000,
+      "tauxTva": 20,
+      "status": "pending",
+      "totalHt": 100000000000000000,
+      "totalTtc": 120000000000000000
     }
   ]
 }

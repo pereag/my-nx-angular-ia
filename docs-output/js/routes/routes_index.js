@@ -1,0 +1,1 @@
+var ROUTES_INDEX = {"name":"<root>","kind":"module","children":[{"name":"AUTH_ROUTES","kind":"module","path":"auth","filename":"apps/mini-crm/src/app/app.routes.ts"},{"name":"ORDERS_ROUTES","kind":"module","path":"orders","filename":"apps/mini-crm/src/app/app.routes.ts"}]}
