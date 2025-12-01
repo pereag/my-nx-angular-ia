@@ -1,0 +1,36 @@
+{
+  "users": [],
+  "orders": [
+    {
+      "id": "1",
+      "customer": "Acme Corp",
+      "nbDays": 10,
+      "tjm": 500,
+      "tauxTva": 20,
+      "totalHt": 5000,
+      "totalTtc": 6000,
+      "status": "pending"
+    },
+    {
+      "id": "2",
+      "customer": "TechStart SAS",
+      "nbDays": 5,
+      "tjm": 600,
+      "tauxTva": 20,
+      "totalHt": 3000,
+      "totalTtc": 3600,
+      "status": "confirmed"
+    },
+    {
+      "id": "3",
+      "customer": "Digital Solutions",
+      "nbDays": 15,
+      "tjm": 450,
+      "tauxTva": 20,
+      "totalHt": 6750,
+      "totalTtc": 8100,
+      "status": "pending"
+    }
+  ]
+}
+
