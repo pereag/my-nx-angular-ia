@@ -40,14 +40,13 @@
       "unitTestRunner": "vitest"
     },
     "@nx/angular:library": {
-      "linter": "eslint",
-      "unitTestRunner": "vitest",
-      "style": "scss"
+      "style": "scss",
+      "unitTestRunner": "vitest"
     },
     "@nx/angular:component": {
-      "style": "scss",
-      "changeDetection": "OnPush"
+      "changeDetection": "OnPush",
+      "style": "scss"
     }
   },
-  "nxCloudId": "6929a3d6be3a378ff41b9bb0"
+  "nxCloudId": "692d63ca814039d384120501"
 }
