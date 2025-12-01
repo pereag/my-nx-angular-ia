@@ -1,0 +1,26 @@
+// ============================================
+// VARIABLES CSS CUSTOM GLOBALES
+// ============================================
+:host {
+  // Variables de thème global (peuvent être surchargées ici si nécessaire)
+  // Par défaut, on utilise les variables Bootstrap définies globalement
+
+  // Host display
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+// ============================================
+// PERSONNALISATION DU THÈME (optionnel)
+// ============================================
+// Si vous souhaitez personnaliser les couleurs du layout globalement :
+//
+// lib-layout {
+//   --sidebar-width: 280px;
+//   --header-height: 70px;
+//   --main-padding: 2rem;
+//   --header-bg: #1a1a1a;
+//   --sidebar-bg: #f8f9fa;
+// }
+
