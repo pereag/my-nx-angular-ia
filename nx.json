@@ -44,8 +44,8 @@
       "unitTestRunner": "vitest"
     },
     "@nx/angular:component": {
-      "changeDetection": "OnPush",
-      "style": "scss"
+      "style": "scss",
+      "changeDetection": "OnPush"
     }
   },
   "nxCloudId": "692d63ca814039d384120501"

@@ -1,0 +1,106 @@
+// ============================================
+// VARIABLES CSS CUSTOM DU COMPONENT
+// ============================================
+:host {
+  // Variables de layout
+  --sidebar-width: 250px;
+  --header-height: 60px;
+  --main-padding: 1.5rem;
+
+  // Variables de couleurs (utilisent les variables CSS Bootstrap globales)
+  --layout-bg: var(--bs-body-bg);
+  --header-bg: var(--bs-dark);
+  --header-text: var(--bs-white);
+  --sidebar-bg: var(--bs-light);
+  --sidebar-border: var(--bs-border-color);
+  --main-bg: var(--bs-body-bg);
+
+  // Host display
+  display: block;
+  height: 100vh;
+}
+
+// ============================================
+// LAYOUT CONTAINER
+// ============================================
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--layout-bg);
+}
+
+// ============================================
+// HEADER
+// ============================================
+.layout-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: var(--header-height);
+  background-color: var(--header-bg);
+  color: var(--header-text);
+  display: flex;
+  align-items: center;
+}
+
+// ============================================
+// SIDEBAR
+// ============================================
+.layout-sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+// ============================================
+// MAIN CONTENT
+// ============================================
+.layout-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--main-padding);
+  background-color: var(--main-bg);
+}
+
+// Layout authentifié : grid avec sidebar
+.layout-container:not(.layout-container--unauthenticated) {
+  display: grid;
+  grid-template-areas:
+    'header header'
+    'sidebar main';
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: var(--header-height) 1fr;
+
+  .layout-header {
+    grid-area: header;
+  }
+
+  .layout-sidebar {
+    grid-area: sidebar;
+  }
+
+  .layout-main {
+    grid-area: main;
+  }
+}
+
+// ============================================
+// LAYOUT NON AUTHENTIFIÉ
+// ============================================
+.layout-container--unauthenticated {
+  justify-content: center;
+  align-items: center;
+}
+
+.layout-main--centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+

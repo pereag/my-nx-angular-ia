@@ -1,0 +1,27 @@
+// ============================================
+// VARIABLES CSS CUSTOM DU COMPONENT
+// ============================================
+:host {
+  // Variables de layout
+  --spinner-container-height: 200px;
+  --spinner-container-padding: 2rem;
+
+  // Variables de couleurs (utilisent les variables CSS Bootstrap globales)
+  --spinner-bg: transparent;
+
+  // Host display
+  display: block;
+}
+
+// ============================================
+// STYLES DU COMPONENT
+// ============================================
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: var(--spinner-container-height);
+  padding: var(--spinner-container-padding);
+  background-color: var(--spinner-bg);
+}
+

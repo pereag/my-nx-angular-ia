@@ -1,0 +1,33 @@
+// ============================================
+// VARIABLES CSS CUSTOM DU COMPONENT
+// ============================================
+:host {
+  // Variables de couleurs (utilisent les variables CSS Bootstrap globales)
+  --modal-bg: var(--bs-white);
+  --modal-border: var(--bs-border-color);
+  --modal-header-bg: var(--bs-light);
+  --modal-title-color: var(--bs-dark);
+
+  // Host display (pas d'impact car le modal est positionné par Bootstrap)
+  display: contents;
+}
+
+// ============================================
+// STYLES DU COMPONENT
+// ============================================
+// Les styles du modal sont gérés par Bootstrap
+// On peut surcharger ici si nécessaire
+
+.modal-content {
+  background-color: var(--modal-bg);
+  border-color: var(--modal-border);
+}
+
+.modal-header {
+  background-color: var(--modal-header-bg);
+}
+
+.modal-title {
+  color: var(--modal-title-color);
+}
+

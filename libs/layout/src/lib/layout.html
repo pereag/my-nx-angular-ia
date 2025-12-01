@@ -1,0 +1,27 @@
+@if (isAuthenticated) {
+  <!-- Layout authentifié : header + sidebar + main -->
+  <div class="layout-container">
+    <!-- Header -->
+    <header class="layout-header">
+      <ng-content select="[layout-header]"></ng-content>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="layout-sidebar">
+      <ng-content select="[layout-sidebar]"></ng-content>
+    </aside>
+
+    <!-- Main content -->
+    <main class="layout-main">
+      <router-outlet />
+    </main>
+  </div>
+} @else {
+  <!-- Layout non authentifié : main en plein écran centré -->
+  <div class="layout-container layout-container--unauthenticated">
+    <main class="layout-main layout-main--centered">
+      <router-outlet />
+    </main>
+  </div>
+}
+
