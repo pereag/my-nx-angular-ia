@@ -1,0 +1,67 @@
+// ============================================
+// VARIABLES CSS CUSTOM DU COMPONENT
+// ============================================
+:host {
+  // Variables de layout
+  --sign-in-card-width: 400px;
+  --sign-in-card-padding: 2rem;
+  --sign-in-gap: 1.5rem;
+
+  // Variables de couleurs (utilisent les variables CSS Bootstrap globales)
+  --sign-in-bg: var(--bs-body-bg);
+  --sign-in-card-bg: var(--bs-white);
+  --sign-in-card-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+
+  // Host display
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+// ============================================
+// STYLES DU COMPONENT
+// ============================================
+.sign-in-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+  background-color: var(--sign-in-bg);
+}
+
+.sign-in-card {
+  width: 100%;
+  max-width: var(--sign-in-card-width);
+  background-color: var(--sign-in-card-bg);
+  box-shadow: var(--sign-in-card-shadow);
+  border: none;
+
+  .card-body {
+    padding: var(--sign-in-card-padding);
+  }
+
+  .card-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--bs-dark);
+
+    i {
+      color: var(--bs-primary);
+    }
+  }
+}
+
+// ============================================
+// RESPONSIVE
+// ============================================
+@media (max-width: 576px) {
+  :host {
+    --sign-in-card-padding: 1.5rem;
+  }
+
+  .sign-in-container {
+    padding: 1rem;
+  }
+}
+

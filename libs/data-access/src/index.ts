@@ -5,5 +5,8 @@ export * from './lib/config/api.config';
 export * from './lib/models/auth.model';
 export * from './lib/models/order.model';
 
+// Services
+export * from './lib/services/auth.service';
+
 // Composants (généré par défaut, peut être supprimé plus tard)
 export * from './lib/data-access/data-access';

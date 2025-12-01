@@ -1,0 +1,118 @@
+<div class="sign-up-container">
+  <div class="card sign-up-card">
+    <div class="card-body">
+      <h2 class="card-title text-center mb-4">
+        <i class="bi bi-person-plus me-2"></i>
+        Inscription
+      </h2>
+
+      @if (error()) {
+        <div class="alert alert-danger" role="alert">
+          {{ error() }}
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <!-- Email -->
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            formControlName="email"
+            [class.is-invalid]="
+              form.controls.email.invalid && form.controls.email.touched
+            "
+            placeholder="votre.email@exemple.com"
+          />
+          @if (form.controls.email.invalid && form.controls.email.touched) {
+            <div class="invalid-feedback">
+              @if (form.controls.email.errors?.['required']) {
+                L'email est requis
+              }
+              @if (form.controls.email.errors?.['email']) {
+                L'email doit être valide
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3">
+          <label for="password" class="form-label">Mot de passe</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            formControlName="password"
+            [class.is-invalid]="
+              form.controls.password.invalid && form.controls.password.touched
+            "
+            placeholder="••••••••"
+          />
+          @if (form.controls.password.invalid && form.controls.password.touched) {
+            <div class="invalid-feedback">
+              @if (form.controls.password.errors?.['required']) {
+                Le mot de passe est requis
+              }
+              @if (form.controls.password.errors?.['minlength']) {
+                Le mot de passe doit contenir au moins 8 caractères
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="mb-3">
+          <label for="confirmPassword" class="form-label">Confirmer le mot de passe</label>
+          <input
+            type="password"
+            class="form-control"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            [class.is-invalid]="
+              (form.controls.confirmPassword.invalid && form.controls.confirmPassword.touched) ||
+              (form.errors?.['passwordMismatch'] && form.controls.confirmPassword.touched)
+            "
+            placeholder="••••••••"
+          />
+          @if (form.controls.confirmPassword.invalid && form.controls.confirmPassword.touched) {
+            <div class="invalid-feedback">
+              @if (form.controls.confirmPassword.errors?.['required']) {
+                La confirmation du mot de passe est requise
+              }
+            </div>
+          }
+          @if (form.errors?.['passwordMismatch'] && form.controls.confirmPassword.touched) {
+            <div class="invalid-feedback" style="display: block;">
+              Les mots de passe ne correspondent pas
+            </div>
+          }
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="btn btn-primary w-100"
+          [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Inscription en cours...
+          } @else {
+            S'inscrire
+          }
+        </button>
+      </form>
+
+      <!-- Sign In Link -->
+      <div class="text-center mt-3">
+        <p class="mb-0">
+          Déjà un compte ?
+          <a routerLink="/auth/sign-in" class="link-primary">Se connecter</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
